@@ -1,0 +1,9 @@
+numpy
+requests
+selenium
+webdriver-manager
+cloudinary
+ultralytics
+opencv-python
+easyocr
+fuzzywuzzy
