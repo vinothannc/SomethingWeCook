@@ -557,10 +557,10 @@ def process_pipeline_dtdc(url):
         for image_url in cloudinary_urls:
             result = process_image_url_dtdc(image_url, reference_image_urls_dtdc)
             if "Phishing site" in result:  # Stop processing if phishing is detected
-                return "Phising site"
+                return "Phishing site"
 
 
-        return "Not Phising site"
+        return "Not Phishing site"
 
 
 def process_pipeline_aliceblue(url):
@@ -572,10 +572,10 @@ def process_pipeline_aliceblue(url):
         for image_url in cloudinary_urls:
             result = process_image_url_aliceblue(image_url)
             if "Phishing site" in result:  # Stop processing if phishing is detected
-                return "Phising site"
+                return "Phishing site"
 
 
-        return "Not Phising site"
+        return "Not Phishing site"
 
 
 def process_pipeline_puravankara(url):
@@ -591,7 +591,7 @@ def process_pipeline_puravankara(url):
 
 
 
-        return "Not Phising site"
+        return "Not Phishing site"
 
 
 def route_pipeline(url, keyword):
