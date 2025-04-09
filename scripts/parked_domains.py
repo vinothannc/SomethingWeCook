@@ -95,6 +95,7 @@ def analyze_with_llm(extracted_text):
         return "Functional Website"
 
     prompt = PROMPT_TEMPLATE.format(text=extracted_text)
+
     try:
         completion = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
@@ -106,28 +107,28 @@ def analyze_with_llm(extracted_text):
             stop=None,
         )
         response_text = completion.choices[0].message.content.strip()
-        print(response_text)
         return response_text
+
     except Exception as e:
         print(f"Error in LLM analysis: {e}")
         return "Functional Website"
 
 
-def detect_parked_domain(image_urls):
-    classifications = []
+def detect_parked_domain(image_url):
 
-    for image_url in image_urls:
-        text = extract_text_from_image_url(image_url)
-        classification = analyze_with_llm(text)
-        classifications.append(classification)
+    text = extract_text_from_image_url(image_url)
+    classification = analyze_with_llm(text)
 
     # Determine final classification
-    final_classification = "Parked Domain" if "Parked Domain" in classifications else "Functional Website"
+    final_classification = "Parked Domain" if classification == 'Parked Domain' else "Functional Website"
 
     return final_classification
 
-def process_images(domain_image_url):
 
-    classification = detect_parked_domain(domain_image_url)
+if __name__ == '__main__':
+    web_site_url = str(input("Enter the screenshot url:"))
 
-    return classification
+    if not web_site_url:
+        print("Web site screen shot url is not provided.")
+
+    detect_parked_domain(web_site_url)

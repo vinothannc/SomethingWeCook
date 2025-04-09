@@ -3,6 +3,7 @@ from asm_models import views as asm_models_views
 
 urlpatterns = [
 
-    path('verification_sites/', asm_models_views.VerificationPhishingSites.as_view())
+    path('phishing_sites/', asm_models_views.PhishingSites.as_view()),
+    path('parking_sites/', asm_models_views.ParkingSites.as_view())
 
 ]

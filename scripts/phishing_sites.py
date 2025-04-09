@@ -1,3 +1,8 @@
+from django.test import TestCase
+
+# Create your tests here.
+
+
 import io
 import time
 import requests
@@ -417,7 +422,6 @@ def process_image_url_puravankara(image_url):
 
     # Step 2: YOLO Detection
     results = yolo_model_purva(img)
-    is_phishing_site = None
     for result in results:
         boxes = result.boxes
         names = result.names
@@ -433,12 +437,12 @@ def process_image_url_puravankara(image_url):
                 # Step 4: Perform OCR on the cropped region
                 rgb_image = cv2.cvtColor(cropped_img, cv2.COLOR_BGR2RGB)
                 extracted_texts = extract_text(rgb_image)
-                is_similar, is_phishing_site = check_similarity(extracted_texts, keywords_puravankara)
+                is_similar, matched_text = check_similarity(extracted_texts, keywords_puravankara)
                 if is_similar:
-                    print(f"✅ Phishing keyword detected: '{is_phishing_site}'")
-                    return is_phishing_site
+                    print(f"✅ Phishing keyword detected: '{matched_text}'")
+                    return f"{image_url}: Phishing site"
 
-    return is_phishing_site
+    return f"{image_url}: Not a phishing site"
 
 
 # Phishing Detection Pipeline aliceblue
@@ -491,8 +495,6 @@ def process_image_url_dtdc(image_url, reference_image_urls):
     """
     print(f"🔍 Processing image URL: {image_url}")
 
-    is_phishing_site = None
-
     # Step 1: Download the image
     img = download_image(image_url)
     if img is None:
@@ -516,9 +518,8 @@ def process_image_url_dtdc(image_url, reference_image_urls):
                 extracted_texts = extract_text(rgb_image)
                 is_similar, matched_text = check_similarity(extracted_texts, keywords_dtdc)
                 if is_similar:
-                    is_phishing_site = 'phishing_site'
                     print(f"✅ Phishing keyword detected: '{matched_text}'")
-                    return is_phishing_site
+                    return f"{image_url}: Phishing site"
 
                 # Step 4: If no keywords matched, check image similarity
                 print(f"🔍 No keyword match. Proceeding to ORB/SIFT similarity checks...")
@@ -532,20 +533,17 @@ def process_image_url_dtdc(image_url, reference_image_urls):
 
                     # Perform ORB similarity check
                     orb_score = orb_similarity(ref_img, cropped_img_gray)
-                    if orb_score > 0.5:
+                    if orb_score > 0.3:
                         print(f"✅ Similar image detected via ORB with score: {orb_score:.2f}")
-                        is_phishing_site = 'phishing_site'
-
-                        return is_phishing_site
+                        return f"{image_url}: Phishing site"
 
                     sift_score = sift_similarity(ref_img, cropped_img_gray)
-                    if sift_score > 0.5:
+                    if sift_score > 0.3:
                         print(f"✅ Similar image detected via SIFT with score: {sift_score:.2f}")
-                        is_phishing_site = 'phishing_site'
-                        return is_phishing_site
+                        return f"{image_url}: Phishing site"
 
     # If no matches found through OCR, ORB, or SIFT, return as not phishing
-    return is_phishing_site
+    return f"{image_url}: Not a phishing site"
 
 
 # process pipeline
@@ -553,72 +551,56 @@ def process_image_url_dtdc(image_url, reference_image_urls):
 def process_pipeline_dtdc(url):
     cloudinary_urls = scroll_and_capture_dtdc(url)
     first_image_url = cloudinary_urls[0] if cloudinary_urls else None
-    phishing_status = None
 
     if first_image_url:
         # Iterate over all captured screenshots
         for image_url in cloudinary_urls:
-            phishing_status = process_image_url_dtdc(image_url, reference_image_urls_dtdc)
-            if "Phishing site" in phishing_status:  # Stop processing if phishing is detected
-                print(f"final result ::{first_image_url}: Phishing site")
-                return phishing_status
+            result = process_image_url_dtdc(image_url, reference_image_urls_dtdc)
+            if "Phishing site" in result:  # Stop processing if phishing is detected
+                return "Phising site"
 
-        # If no phishing indicators found in any screenshot
-        print(f"{first_image_url}: Not a phishing site")
-    else:
-        print(f"❌ No screenshots available for: {url}")
 
-    return phishing_status
+        return "Not Phising site"
 
 
 def process_pipeline_aliceblue(url):
-    # Single URL to process
-    # Step 1: Capture screenshots and upload them to Cloudinary
     cloudinary_urls = scroll_and_capture_aliceblue(url)
+    first_image_url = cloudinary_urls[0] if cloudinary_urls else None
 
-    # Step 2: Process uploaded images for phishing detection
-    phishing_detected = False
-    for image_url in cloudinary_urls:
-        if process_image_url_aliceblue(image_url):
-            phishing_detected = True
-            break
-
-    # Final Output: Only the first screenshot URL with the phishing site status
-    first_image_url = cloudinary_urls[0] if cloudinary_urls else "No screenshots captured"
-    status = "phishing site" if phishing_detected else "not phishing site"
-    print(f"final result: {first_image_url}")
-    print(f"{status}")
+    if first_image_url:
+        # Iterate over all captured screenshots
+        for image_url in cloudinary_urls:
+            result = process_image_url_aliceblue(image_url)
+            if "Phishing site" in result:  # Stop processing if phishing is detected
+                return "Phising site"
 
 
-# Main Execution
+        return "Not Phising site"
+
+
 def process_pipeline_puravankara(url):
-    # Single URL to process
-    # Step 1: Capture screenshots and upload them to Cloudinary
     cloudinary_urls = scroll_and_capture_puravankara(url)
+    first_image_url = cloudinary_urls[0] if cloudinary_urls else None
 
-    # Step 2: Process uploaded images for phishing detection
-    phishing_detected = False
-    phishing_status = None
-    for image_url in cloudinary_urls:
-        phishing_status = process_image_url_puravankara(image_url)
-        if phishing_status:
-            phishing_detected = True
-            break
+    if first_image_url:
+        # Iterate over all captured screenshots
+        for image_url in cloudinary_urls:
+            result = process_image_url_puravankara(image_url)
+            if "Phishing site" in result:  # Stop processing if phishing is detected
+                return "Phishing site"
 
-    # Final Output: Only the first screenshot URL with the phishing site status
-    first_image_url = cloudinary_urls[0] if cloudinary_urls else "No screenshots captured"
-    status = "phishing site" if phishing_detected else "not phishing site"
-    print(f"final result: {first_image_url}")
-    print(f"phishing status : {phishing_status}")
 
-    return phishing_status
+
+        return "Not Phising site"
 
 
 def route_pipeline(url, keyword):
     # Predefined original sites
-    original_sites = ["dtdc.com", "dtdc.in", "aliceblueonline.com", "puravankara.com"]
+    original_sites = ["dtdc.com", "dtdc.in", "dtdc.ai", "mydtdc.in", "dtdcbazaar.in",
 
-    final_data = None
+                      "puravankara.com", "purvaland.com",
+
+                      "aliceblueonline.com", "aliceblueindia.com"]
 
     # Split the input into URL and keyword
     try:
@@ -629,28 +611,30 @@ def route_pipeline(url, keyword):
 
     # Check if URL matches an original site
     if url in original_sites:
-        print("original site.")
-        return  # Exit the function as no pipeline needs to run for original sites
+        return 'not phishing site'  # Exit the function as no pipeline needs to run for original sites
 
     # Otherwise, proceed with routing logic
-    keyword = keyword.lower()  # Convert keyword to lowercase for consistent matching
-    if keyword == "dtdc":
+    if keyword == "DTDC":
         print("Routing to DTDC pipeline...")
-        process_pipeline_dtdc(url)
-    elif keyword == "aliceblue":
+        status = process_pipeline_dtdc(url)
+    elif keyword == "AliceBlue":
         print("Routing to AliceBlue pipeline...")
-        process_pipeline_aliceblue(url)
-    elif keyword == "purva":
+        status = process_pipeline_aliceblue(url)
+    elif keyword == "Puravankara":
         print("Routing to Purvankara pipeline...")
-        final_data = process_pipeline_puravankara(url)
+        status = process_pipeline_puravankara(url)
     else:
-        print(f"Unknown keyword: {keyword}. Valid keywords are: dtdc, aliceblue, purva.")
+        status = None
 
-    return final_data
+    return status
 
 
-# Example input
-# route_pipeline(url="providenthousing.com", keyword="purva")
+if __name__ == '__main__':
+    # Example input
+    final_status = route_pipeline(url="aliceblueonline.com", keyword="aliceblue")
+
+    print(f"here is the final status : {final_status}")
+
 
 
 
